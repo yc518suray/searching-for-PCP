@@ -44,7 +44,7 @@ fi
 len=$(($order / $compress))
 
 [ $order -eq $order 2>/dev/null ] || exit 1
-[ $numproc -eq $numproc 2>/dev/null ] || exit 1
+#[ $numproc -eq $numproc 2>/dev/null ] || exit 1
 
 # ---------- Generation ---------- #
 if [ -z "$option1" ]; then #start Generation (default)
@@ -106,6 +106,7 @@ if [ "$option2" = "stop" ] && [ "$letter2" = "M" ];then
 fi
 
 # ---------- Uncompression ---------- #
+# 平行化修改
 if [[ -z "$option1" || ( "$option1" = "start" &&  "$letter1" = "U" ) ]];then #start Uncompression
 
 option1=""
@@ -113,20 +114,80 @@ option1=""
 if [ $compress -gt 1 ]
 then
 
-echo Uncompressing Pairs...
+# --- 平行化開始 ---
+# 定義平行化參數
+NUM_PROCS=7      # <-- 請根據你的 CPU 核心數設定
+NEWCOMPRESS=1    # <-- 最終解壓縮的目標因子 (通常是 1)
+INPUT_FILE="results/$order-pairs-found"
 
-./uncompress.sh $order $compress 1 0
+echo "Calculating line counts and splitting input file..."
 
-cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime 2> /dev/null
-cp results/$order/$order-pairs-found-0 results/$order-pairs-found 2> /dev/null
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "Error: Input file $INPUT_FILE not found for uncompression."
+    exit 1
+fi
 
-rm results/$order/$order-pairs-found-0
+TOTAL_LINES=$(tr -d '\r' < "$INPUT_FILE" | wc -l)
+
+# 為了確保每個檔案大小平均，我們需要重新執行 uncompress.sh 中的計算邏輯
+START_LINE=1
+TEMP_INPUT_PREFIX="results/$order/uncomp_input_"
+rm -f ${TEMP_INPUT_PREFIX}* # 清理舊的分割檔案
+
+for i in $(seq 1 $NUM_PROCS); do
+    # 重新計算 CHUNK_SIZE (與 uncompress.sh 邏輯一致)
+    CHUNK_SIZE_BASE=$((TOTAL_LINES / NUM_PROCS))
+    REMAINDER=$((TOTAL_LINES % NUM_PROCS))
+    
+    if [ "$i" -le "$REMAINDER" ]; then
+        CHUNK_SIZE=$((CHUNK_SIZE_BASE + 1))
+    else
+        CHUNK_SIZE=$CHUNK_SIZE_BASE
+    fi
+    
+    # 使用 AWK 抽取該區塊的行並輸出到獨立檔案
+    if [ "$CHUNK_SIZE" -gt 0 ]; then
+        END_LINE=$((START_LINE + CHUNK_SIZE - 1))
+        
+        SPLIT_OUTPUT_FILE="${TEMP_INPUT_PREFIX}$i"
+        
+        # AWK 是一種高性能的行數選擇工具
+        awk "NR >= $START_LINE && NR <= $END_LINE" $INPUT_FILE > "$SPLIT_OUTPUT_FILE"
+        echo "Created file $SPLIT_OUTPUT_FILE: Lines $START_LINE to $END_LINE"
+
+        # 更新下一輪的起始行
+        START_LINE=$((END_LINE + 1))
+    fi
+done
+
+echo "Finished splitting file into $NUM_PROCS parts."
+
+# --- END 檔案切割 ---
+
+echo "Launching $NUM_PROCS parallel uncompression tasks..."
+start_uncomp=`date +%s` 
+mkdir -p logs 2> /dev/null
+
+# 迴圈啟動所有工作進程 (ProcID 從 1 到 NUM_PROCS)
+for i in $(seq 1 $NUM_PROCS); do
+	./uncompress.sh $order $compress $NEWCOMPRESS $i > logs/uncompress_proc_$i.log 2>&1 &
+done
+
+# 等待所有背景任務完成
+wait 
+end_uncomp=`date +%s`
+runtime3=$((end_uncomp - start_uncomp))
+echo $runtime3 seconds elapsed for parallel uncompression.
+
+# cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime 2> /dev/null
+# cp results/$order/$order-pairs-found-0 results/$order-pairs-found 2> /dev/null
+# rm results/$order/$order-pairs-found-0
 
 else
 	echo "compression factor = 1, no need to uncompress"
 
 fi
-fi #finish Matching
+fi #finish Uncompression
 
 if [ "$option2" = "stop" ] && [ "$letter2" = "U" ];then
 	echo -e "exit after finishing ${CYAN_COLOR}uncompression${NO_COLOR} ... GOODBYE!"

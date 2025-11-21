@@ -27,7 +27,7 @@ $(BIN)fourier.o: $(DIR)fourier.cpp $(DIR)golay.h
 	$(CC) -Wall -Wextra -O3 -g -c $(DIR)fourier.cpp -o $(BIN)fourier.o $(FFTW)
 
 $(BIN)golay.o: $(DIR)golay.h
-	$(CC) -Wall -g -O3 -c $(DIR)golay.cpp -o $(BIN)golay.o
+	$(CC) -Wall -g -O3 -c $(DIR)golay.cpp -o $(BIN)golay.o $(FFTW)
 
 $(BIN)match_pairs: $(SRC)match_pairs.cpp $(DIR)golay.h $(BIN)golay.o $(BIN)binary.o
 	$(CC) -Wall -g -O3 $(SRC)match_pairs.cpp $(BIN)golay.o $(BIN)binary.o -o $(BIN)match_pairs
@@ -45,7 +45,7 @@ $(BIN)equivalence.o: $(DIR)equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 	$(CC) -Wall -g -O3 -c $(DIR)equivalence.cpp -o $(BIN)equivalence.o
 
 $(BIN)uncompression: $(SRC)uncompression.cpp $(BIN)array.o $(BIN)equivalence.o $(BIN)binary.o
-	$(CC) -Wall -g -O3 $(SRC)uncompression.cpp $(BIN)equivalence.o $(BIN)fourier.o $(BIN)array.o $(BIN)binary.o -o $(BIN)uncompression $(FFTW)
+	$(CC) -Wall -g -O3 $(SRC)uncompression.cpp $(BIN)equivalence.o $(BIN)fourier.o $(BIN)array.o $(BIN)binary.o -o $(BIN)uncompression $(FFTW) -fopenmp -lfftw3_threads
 
 $(BIN)compress: $(SRC)compress.cpp $(BIN)fourier.o
 	$(CC) -Wall -g -O3 $(SRC)compress.cpp $(BIN)fourier.o -o $(BIN)compress $(FFTW)

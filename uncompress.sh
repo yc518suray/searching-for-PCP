@@ -12,30 +12,16 @@
 
     start=`date +%s`
 
-    echo Uncompressing
+    echo "--- Proc $proc starting uncompression ---"
+    INPUT_FILE="results/$order/uncomp_input_$proc"
 
-    if [[ $proc -eq 0 ]]
-    then
-        linecount=$(wc -l < results/$order-pairs-found)
-    
-    else 
-        linecount=$(wc -l < results/$order-pairs-found-$proc)
-    fi    
+    if [ ! -f "$INPUT_FILE" ]; then
+        echo "Error: Worker input file $INPUT_FILE not found. Exiting Proc $proc."
+        exit 1
+    fi
 
-
-    for ((i = 1; i<=$linecount; i++))
-    do
-        echo line $i
-        ./bin/uncompression $i $proc $order $compress $newcompress
-
-        ./match.sh $order $(($order / $newcompress)) $proc
-
-        cat results/$order/$order-pairs-found_$proc >> results/$order/$order-pairs-found-$proc
-
-    done
+    ./bin/uncompression $order $compress $newcompress $proc $INPUT_FILE
 
     end=`date +%s`
     runtime3=$((end-start))
-    echo $runtime3 seconds
-
-    total=$((runtime1 + runtime2 + runtime3))
+    echo "Proc $proc finished in $runtime3 seconds."
