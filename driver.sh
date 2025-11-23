@@ -126,7 +126,7 @@ else
 	echo "compression factor = 1, no need to uncompress"
 
 fi
-fi #finish Matching
+fi #finish Uncompression
 
 if [ "$option2" = "stop" ] && [ "$letter2" = "U" ];then
 	echo -e "exit after finishing ${CYAN_COLOR}uncompression${NO_COLOR} ... GOODBYE!"

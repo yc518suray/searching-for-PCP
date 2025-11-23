@@ -56,6 +56,7 @@ int isCanonical(vector<int> seq, set<vector<int>> generators) {
     vector<int> newseq;
     newseq.resize(LEN);
 
+	//Su: check the whole equivalence set if seq is canonical
     for(vector<int> item : generators) {
         for(int i = 0; i < LEN; i++) {
             newseq[i] = seq[item[i] - 1];
@@ -67,6 +68,8 @@ int isCanonical(vector<int> seq, set<vector<int>> generators) {
     return 1;
 }
 
+//Su: this function checks if a seq is lex-minimal in its permutation set
+//	  see paper Example 1
 bool partialCanonical(vector<int> base) {
     vector<int> seq = base;
     while(seq.size() != 0) {
@@ -78,6 +81,7 @@ bool partialCanonical(vector<int> base) {
             } else if(seq[i] == base[i]) {
                 continue;
             } else {
+				//Su: If seq[i] > base[i] then break. Why?
                 break;
             }
         }
@@ -114,6 +118,8 @@ vector<int> permute(vector<int> seq, int coprime) {
     vector<int> newseq;
     newseq.resize(LEN);
     for(int i = 0; i < LEN; i++) {
+		//Su: so the 1st element is always the same?
+		//	  OK if the base is lex-minimal
         newseq[i] = seq[(i * coprime) % (LEN)];
     }
     return newseq;

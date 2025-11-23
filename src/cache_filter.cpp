@@ -4,7 +4,6 @@
 #include<array>
 #include<vector>
 #include<set>
-#include<time.h>
 #include<string>
 #include<fstream>
 #include<iostream>
@@ -64,7 +63,7 @@ int main(int argc, char ** argv) {
         sequences.insert(seq);
     }
 
-    printf("%lu sequences loaded.\n", sequences.size());
+    printf("%llu sequences loaded.\n", sequences.size());
 
     printf("Constructing Generators\n");
 
@@ -112,7 +111,7 @@ int main(int argc, char ** argv) {
                     sequences.erase(current);
                 }
             }
-            printf("Filtered. Size: %lu\n", sequences.size());
+            printf("Filtered. Size: %llu\n", sequences.size());
             it++;
         } else {
             set<GolayPair> newset;
@@ -121,13 +120,13 @@ int main(int argc, char ** argv) {
                 sequences.erase(seq);
             }
             sequences.insert(base);
-            printf("Classwise filter. Size: %lu\n", sequences.size());
+            printf("Classwise filter. Size: %llu\n", sequences.size());
             it = sequences.find(base);
             it++;
         }
     }
 
-    printf("%lu unique sequences found.\n", sequences.size());
+    printf("%llu unique sequences found.\n", sequences.size());
 
     for(GolayPair seq : sequences) {
         for(int i = 0; i < LEN; i++) {

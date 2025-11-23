@@ -37,6 +37,8 @@ int main(int argc, char ** argv) {
     fftw_complex *in, *out;
     fftw_plan p;
 
+	//Su: NEWCOMPRESS is used for multi-level uncompression
+
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
     p = fftw_plan_dft_1d((ORDER) / NEWCOMPRESS, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -68,6 +70,7 @@ int main(int argc, char ** argv) {
     origb.resize(LEN);
     
 
+	//Su: maybe parallelization can be used here?
     int i = 1;
     while(i < linenumber && getline(file, line)) {
         i++;
@@ -107,6 +110,7 @@ int main(int argc, char ** argv) {
 
     std::set<int> newalphabet;
 
+	//Su: by default NEWCOMPRESS = 1
     if(NEWCOMPRESS % 2 == 0) {
         for(int i = 0; i <= NEWCOMPRESS; i += 2) {
             newalphabet.insert(i);
@@ -126,7 +130,8 @@ int main(int argc, char ** argv) {
     std::map<int, std::vector<std::vector<int>>> partitions;
 
     //generate all permutations of possible decompositions for each letter in the alphabet
-    for(int letter : alphabet) {
+    //Su: could this be simplified?
+	for(int letter : alphabet) {
         partition.clear();
         for(std::vector<int> part : parts) {
             int sum = 0;
@@ -286,8 +291,6 @@ int main(int argc, char ** argv) {
     stack = stackb;
 
     //partitions = partitionsB;
-
-
     
     while(curr != -1) {
 
@@ -356,4 +359,6 @@ int main(int argc, char ** argv) {
 
     fclose(outa);
     fclose(outb);
+
+	return 0;
 }

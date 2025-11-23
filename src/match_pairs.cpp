@@ -17,7 +17,6 @@ int main(int argc, char ** argv) {
 
     printf("Matching\n");
     
-
         char fname[100];
         sprintf(fname, "results/%d/%d-pairs-found_%d", ORDER, ORDER, procnum);
         FILE * out = fopen(fname, "w");
@@ -52,6 +51,8 @@ int main(int argc, char ** argv) {
             return 1;
         }
 
+		//Su: a => PSD (rounded) of seq in file A
+		//	  b => PSD (rounded) of seq in file B
         filea >> a;
         fileb >> b;
 
@@ -73,7 +74,7 @@ int main(int argc, char ** argv) {
             //match all combinations of these vectors
 
             if(a == b) {
-                //match the pairs
+					//match the pairs
                     temp = a;
 
                     while(filea.good() && a == temp) {
@@ -100,6 +101,7 @@ int main(int argc, char ** argv) {
 
                     for(vector<int> sequenceA : matchA) {
                         for(vector<int> sequenceB : matchB) {
+							//Su: check_if_pair is defined in golay.cpp
                             if(check_if_pair(sequenceA, sequenceB)) {
                                 write_seq(out, sequenceA);
                                 fprintf(out, " ");
@@ -132,5 +134,7 @@ int main(int argc, char ** argv) {
                     seqb[i] = stoi(arrayB);
                 }
             }
+
+			else;
         }
 }

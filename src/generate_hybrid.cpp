@@ -12,12 +12,13 @@
 #include"../lib/fourier.h"
 #include<tgmath.h>
 #include<algorithm>
+#include<omp.h>
 
 using namespace std;
 
 void writeSeq(FILE * out, vector<int> seq);
 
-
+//Su: actually it's norm squared
 double norm(fftw_complex dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
@@ -48,12 +49,16 @@ int main(int argc, char ** argv) {
     int COMPRESS = stoi(argv[2]);
     int LEN = ORDER / COMPRESS;
 
+	//Su: FFTW multi-thread init
+	fftw_init_threads();
+	fftw_plan_with_nthreads(omp_get_max_threads());
+
     fftw_complex *in, *out;
     fftw_plan plan;
 
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_MEASURE);
 
     //Su: maybe FFTW_ESTIMATE can be replaced with FFT_MEASURE?
     //Su: FFTW_MEASURE -> measure time for different methods and find optimum
@@ -85,23 +90,49 @@ int main(int argc, char ** argv) {
 
     set<vector<int>> partialsols;
     vector<int> seq;
-    set<vector<int>> generatorsA = constructGenerators(0, LEN);
-    set<vector<int>> generatorsB = constructGenerators(1, LEN);
+	
+	//Su: parallelization
+	#pragma omp parallel sections
+	{
+    	#pragma omp section
+		{
+			set<vector<int>> generatorsA = constructGenerators(0, LEN);
+    	}
+		#pragma omp section
+		{
+			set<vector<int>> generatorsB = constructGenerators(1, LEN);
+		}
+	}
 
 	//Su: flag = 0 --> decimation equivalents are generated
 	//Su: flag = 1 --> decimation equivalents NOT generated
 
-    vector<int> test = {1};
+    //vector<int> test = {1};
+	bool stop_branching = false;
 
-    while(nextBranch(seq, LEN / 2, alphabet)) {
+	//int cnt = 0;
 
-        if(!partialCanonical(seq)) {
+	//Su: seq is of size 0 at the beginning
+    while(!stop_branching && nextBranch(seq, LEN / 2, alphabet)) {
+
+		//Su: orderly generation, corrected
+        while(!partialCanonical(seq)) {
             if(!nextBranch(seq, seq.size(), alphabet)) {
-                break;
+				stop_branching = true;
+				break;
             }
         }
+		
+		//Su: integer partition
+        if(!stop_branching && (int)seq.size() == LEN / 2) {
 
-        if((int)seq.size() == LEN / 2) {
+			//cnt++;
+			//printf("No.%*d, orderly generation = ", 8, cnt);
+			//for(size_t i = 0; i < seq.size(); i++)
+			//{
+			//	printf("%*d ", 2, seq[i]);
+			//}
+			//printf("\n");
 
             //finish the constructions
             vector<vector<int>> combinations = getCombinations(LEN - seq.size(), alphabet);
@@ -124,29 +155,30 @@ int main(int argc, char ** argv) {
 
                 do {
 
-
                     if(newseq.back() == *alphabet.begin()) {
                         continue;
                     }
 
                     if(rowsum(newseq) == decomps[ORDER][0][0]) {
-                        out = dft(newseq, in, out, plan);
+                        //Su: out = DFT of newseq
+						out = dft(newseq, in, out, plan);
                         if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
-                            count++;
+							count++;
                             for(int i = 0; i < LEN / 2; i++) {
                                 fprintf(outa, "%d",    (int)rint(norm(out[i])));
                             }
                             fprintf(outa, " ");
                             writeSeq(outa, newseq);
                             fprintf(outa, "\n");
-                                                if(newseq == test) {
-                            printf("REPEAT!\n");
-                            for(int i = 0; i < newseq.size(); i++) {
-                                printf("%d ", newseq[i]);
-                            }
-                            printf("\n");
-                        }
-                        test = newseq;
+                           	//Su: the following is for debugging?
+							//if(newseq == test) {
+                            //	printf("REPEAT!\n");
+                            //	for(size_t i = 0; i < newseq.size(); i++) {
+                            //    	printf("%d ", newseq[i]);
+                            //	}
+                            //	printf("\n");
+                        	//}
+                        	//test = newseq;
                         }
                     }
 
@@ -176,7 +208,10 @@ int main(int argc, char ** argv) {
     fftw_destroy_plan(plan);
 
     fclose(outa);
-    
+	//Su: why not close file "outb"?
+	fclose(outb);
+ 
+	return 0;  
 }
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
@@ -221,6 +256,9 @@ bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
 
 bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
 
+	//Su: elements are stored in set with ascending order
+	//	  min = minimum in the set, max = maximum in the set
+
     int max = *alphabet.rbegin();
     int min = *alphabet.begin();
 
@@ -229,15 +267,19 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
                 seq.pop_back();
             }
             if(seq.size() == 0) {
+				//Su: no, don't go to next branch
                 return false;
             }
             int next = seq.back() + 2;
             seq.pop_back();
             seq.push_back(next);
-        } else {
+        }
+		//Su: the minimum letter in alphabet is inserted to seq
+		else {
             seq.push_back(min);
         }
     
+	//Su: yes, next branch please
     return true;
 
 }

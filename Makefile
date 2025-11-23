@@ -33,7 +33,7 @@ $(BIN)match_pairs: $(SRC)match_pairs.cpp $(DIR)golay.h $(BIN)golay.o $(BIN)binar
 	$(CC) -Wall -g -O3 $(SRC)match_pairs.cpp $(BIN)golay.o $(BIN)binary.o -o $(BIN)match_pairs
 
 $(BIN)generate_hybrid: $(SRC)generate_hybrid.cpp $(BIN)golay.o $(BIN)array.o $(BIN)fourier.o $(BIN)orderly_equivalence.o $(BIN)binary.o
-	$(CC) -Wall -g -O3 $(SRC)generate_hybrid.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o $(BIN)golay.o $(BIN)binary.o -o $(BIN)generate_hybrid $(FFTW)
+	$(CC) -Wall -g -O3 $(SRC)generate_hybrid.cpp $(BIN)orderly_equivalence.o $(BIN)array.o $(BIN)fourier.o $(BIN)golay.o $(BIN)binary.o -o $(BIN)generate_hybrid $(FFTW) -lfftw3_omp -fopenmp
 
 $(BIN)cache_filter: $(SRC)cache_filter.cpp $(DIR)golay.h $(BIN)equivalence.o
 	$(CC) -Wall -g -O3 $(SRC)cache_filter.cpp $(BIN)equivalence.o -o $(BIN)cache_filter
