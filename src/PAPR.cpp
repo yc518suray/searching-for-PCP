@@ -47,14 +47,17 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
+	int oversampling = 30;
+
     int ORDER = std::stoi(argv[1]);
     int LEN = std::stoi(argv[2]);
-    int N = LEN; // fft length = sequence length
+    int N = LEN; // original sequence length
+	int Noversample = N * oversampling;
 
-    fftw_complex *in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-    fftw_complex *out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
+    fftw_complex *in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * Noversample);
+    fftw_complex *out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * Noversample);
     
-    fftw_plan p_ifft = fftw_plan_dft_1d(N, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftw_plan p_ifft = fftw_plan_dft_1d(Noversample, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
 
     char fname[100];
     std::sprintf(fname, "results/%d-unique-pairs-found", ORDER);
@@ -72,14 +75,14 @@ int main(int argc, char ** argv) {
     int pair_count = 0;
     
     std::cout << "\n--- Golay Pair PAPR  ---\n";
-    std::cout << "Pair | PAPR (A) | PAPR (B)\n";
+    std::cout << "Pair |  PAPR (A)  |  PAPR (B)\n";
     std::cout << "-----------------------------------\n";
     std::cout << std::fixed << std::setprecision(6); // increase output precision
 
     while (std::getline(infile, line)) {
-       pair_count++;
+    	pair_count++;
 
-        // use stringstream to parse the line
+    	// 1. use stringstream to parse the line
         std::stringstream ss(line);
         int value;
         std::vector<int> full_sequence;
@@ -89,29 +92,34 @@ int main(int argc, char ** argv) {
         }
 
         // 2. check length
-        if (full_sequence.size() != 2 * N) {
+        if ((int)full_sequence.size() != 2 * N) {
             // error handling
+			std::cout<<"something is wrong with line "<<pair_count<<std::endl;
             continue;
         }
 
         // 3. seperate A and B
-        std::vector<int> seqa(full_sequence.begin(), full_sequence.begin() + N);
-        std::vector<int> seqb(full_sequence.begin() + N, full_sequence.end());
+		std::vector<int> seqa(Noversample, 0);
+		copy(full_sequence.begin(), full_sequence.begin() + N, seqa.begin());
+        std::vector<int> seqb(Noversample, 0);
+		copy(full_sequence.begin() + N, full_sequence.end(), seqb.begin());
 
-        fftw_complex *xA_fftw = dft(seqa, in, out, p_ifft); 
-        
+		//Su: PAPR of sequence A
+        vector<vector<double>> xA_fft = dft(seqa, in, out, p_ifft); 
         std::vector<std::complex<double>> xA_time_domain;
-        for(int i = 0; i < N; ++i) {
+
+		for(int i = 0; i < N; ++i) {
             // IFFT output devided by N normalization
-            xA_time_domain.emplace_back(xA_fftw[i][0] / N, xA_fftw[i][1] / N); 
+            xA_time_domain.emplace_back(oversampling * xA_fft[i][0] / N, oversampling * xA_fft[i][1] / N); 
         }
         double paprA_linear = calculate_papr_linear(xA_time_domain);
 
-        fftw_complex *xB_fftw = dft(seqb, in, out, p_ifft);
-        
+		//Su: PAPR of sequence B
+        vector<vector<double>> xB_fft = dft(seqb, in, out, p_ifft); 
         std::vector<std::complex<double>> xB_time_domain;
-        for(int i = 0; i < N; ++i) {
-            xB_time_domain.emplace_back(xB_fftw[i][0] / N, xB_fftw[i][1] / N); 
+        
+		for(int i = 0; i < N; ++i) {
+            xB_time_domain.emplace_back(oversampling * xB_fft[i][0] / N, oversampling * xB_fft[i][1] / N); 
         }
         double paprB_linear = calculate_papr_linear(xB_time_domain);
 
@@ -126,7 +134,7 @@ int main(int argc, char ** argv) {
     fftw_free(in);
     fftw_free(out);
 
-    std::cout << "\n done,excuted " << pair_count << " pairs。" << std::endl;
+    std::cout << "\ndone, excuted " << pair_count << " pairs." << std::endl;
     
     return 0;
 }

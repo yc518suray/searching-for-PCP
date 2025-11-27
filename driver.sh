@@ -168,16 +168,18 @@ datetime=$(date +"%Y-%m-%d")
 
 cp results/$order-unique-pairs-found results/history/$order-1-$datetime-$epochtime 2> /dev/null
 
-echo "Filtering Equivalences done, go see the results!"
 fi #finish Equivalence Filtering
 
-#  PAPR Calculation and Reporting  #
+if [ "$option2" = "stop" ] && [ "$letter2" = "E" ];then
+	echo "Filtering Equivalences done, go see the results!"
+	exit 0
+fi
 
-if [[ -z "$option1" || ( "$option1" = "start" &&  "$letter1" = "P" ) ]];then 
+# ---------- PAPR Calculation and Reporting ---------- #
 
-echo 
+if [[ -z "$option1" || ( "$option1" = "start" && "$letter1" = "P" ) ]]; then
+
 echo -e "${CYAN_COLOR}Calculating PAPR of Unique Pairs...${NO_COLOR}"
-
 
 PAPR_LEN=$order
 
@@ -186,10 +188,3 @@ PAPR_LEN=$order
 echo -e "${CYAN_COLOR}PAPR Calculation done.${NO_COLOR}"
 
 fi #finish PAPR Calculation
-
-# ---------- Exit if needed ---------- #
-if [ "$option2" = "stop" ] && [ "$letter2" = "P" ];then
-    echo -e "exit after finishing ${CYAN_COLOR}PAPR calculation${NO_COLOR} ... GOODBYE!"
-    exit 0
-fi
-

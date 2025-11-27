@@ -51,7 +51,6 @@ $(BIN)compress: $(SRC)compress.cpp $(BIN)fourier.o
 	$(CC) -Wall -g -O3 $(SRC)compress.cpp $(BIN)fourier.o -o $(BIN)compress $(FFTW)
 
 # ---------- PAPR Calculation ---------- #
-# 假設原始碼檔名為 src/papr_calculator.cpp
 $(BIN)PAPR: $(SRC)PAPR.cpp $(BIN)fourier.o $(BIN)golay.o $(BIN)binary.o
 	$(CC) -Wall -g -O3 $(SRC)PAPR.cpp $(BIN)fourier.o $(BIN)golay.o $(BIN)binary.o -o $(BIN)PAPR $(FFTW)
 clean:
