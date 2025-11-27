@@ -12,7 +12,7 @@ FFTW = -I/ucrt64/include -L/ucrt64/lib -lfftw3 -lm
 
 #FFTW = -I/usr/local/include -L/usr/local/lib -lfftw3 -lm
 
-all: bin/binary.o bin/golay.o bin/fourier.o bin/orderly_equivalence.o bin/equivalence.o bin/array.o bin/generate_hybrid bin/cache_filter bin/canon_filter bin/match_pairs bin/uncompression bin/compress
+all: bin/binary.o bin/golay.o bin/fourier.o bin/orderly_equivalence.o bin/equivalence.o bin/array.o bin/generate_hybrid bin/cache_filter bin/canon_filter bin/match_pairs bin/uncompression bin/compress bin/PAPR
 
 $(BIN)orderly_equivalence.o: $(DIR)orderly_equivalence.cpp $(DIR)golay.h $(DIR)coprimes.h
 	$(CC) -Wall -g -c -O3 $(DIR)orderly_equivalence.cpp -o $(BIN)orderly_equivalence.o
@@ -49,6 +49,11 @@ $(BIN)uncompression: $(SRC)uncompression.cpp $(BIN)array.o $(BIN)equivalence.o $
 
 $(BIN)compress: $(SRC)compress.cpp $(BIN)fourier.o
 	$(CC) -Wall -g -O3 $(SRC)compress.cpp $(BIN)fourier.o -o $(BIN)compress $(FFTW)
+
+# ---------- PAPR Calculation ---------- #
+# 假設原始碼檔名為 src/papr_calculator.cpp
+$(BIN)PAPR: $(SRC)PAPR.cpp $(BIN)fourier.o $(BIN)golay.o $(BIN)binary.o
+	$(CC) -Wall -g -O3 $(SRC)PAPR.cpp $(BIN)fourier.o $(BIN)golay.o $(BIN)binary.o -o $(BIN)PAPR $(FFTW)
 clean:
 	@echo "Cleaning up..."
 	rm -f bin/*
