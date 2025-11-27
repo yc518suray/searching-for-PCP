@@ -254,9 +254,9 @@ bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
         while(curr != last) {
             *curr = min;
         }
-        
+
         return false;
-        
+
     }
 
     return false;
