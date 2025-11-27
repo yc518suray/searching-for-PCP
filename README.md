@@ -17,7 +17,7 @@ The `--start` option is used to start the program from some specific stage. `[St
 - `M` or `m` $\rightarrow$ matching
 - `U` or `u` $\rightarrow$ uncompression
 - `E` or `e` $\rightarrow$ equivalence filtering
-- `P` or `p` $\roghtarrow$ calculate PAPR of PCPs
+- `P` or `p` $\rightarrow$ calculate PAPR of PCPs
 
 The `--stop` option is used to stop the program after some specific stage. `[Stage2]`is the stage after which the program stops. If this option is not provided, the program finishes as usual.
 
