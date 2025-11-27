@@ -70,7 +70,7 @@ int main(int argc, char ** argv) {
     unsigned long long int count = 0;
 
     std::set<int> alphabet;
- 
+
     if(COMPRESS % 2 == 0) {
         for(int i = 0; i <= COMPRESS; i += 2) {
             alphabet.insert(i);
@@ -112,14 +112,14 @@ int main(int argc, char ** argv) {
                 if(sum == decomps[ORDER][0][0] - rowsum(seq) || sum == decomps[ORDER][0][1] - rowsum(seq)) {
                     rowcombo.push_back(combo);
                 }
-            }  
+            }
 
             for(vector<int> tail : rowcombo) {
 
                 sort(tail.begin(), tail.end());
 
                 vector<int> newseq = seq;
-                
+
                 newseq.insert(newseq.end(), tail.begin(), tail.end());
 
                 do {
@@ -164,7 +164,7 @@ int main(int argc, char ** argv) {
                     }
 
                 } while(next_permutation(newseq.begin() + LEN / 2, newseq.end()));
-                
+
             }
         }
     }
@@ -176,7 +176,7 @@ int main(int argc, char ** argv) {
     fftw_destroy_plan(plan);
 
     fclose(outa);
-    
+
 }
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
@@ -211,9 +211,9 @@ bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
         while(curr != last) {
             *curr = min;
         }
-        
+
         return false;
-        
+
     }
 
     return false;
@@ -237,7 +237,7 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet) {
         } else {
             seq.push_back(min);
         }
-    
+
     return true;
 
 }

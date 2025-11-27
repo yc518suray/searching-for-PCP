@@ -116,7 +116,7 @@ then
 
 # --- 平行化開始 ---
 # 定義平行化參數
-NUM_PROCS=7      # <-- 請根據你的 CPU 核心數設定
+NUM_PROCS=3      # <-- 請根據你的 CPU 核心數設定
 NEWCOMPRESS=1    # <-- 最終解壓縮的目標因子 (通常是 1)
 INPUT_FILE="results/$order-pairs-found"
 
@@ -138,19 +138,19 @@ for i in $(seq 1 $NUM_PROCS); do
     # 重新計算 CHUNK_SIZE (與 uncompress.sh 邏輯一致)
     CHUNK_SIZE_BASE=$((TOTAL_LINES / NUM_PROCS))
     REMAINDER=$((TOTAL_LINES % NUM_PROCS))
-    
+
     if [ "$i" -le "$REMAINDER" ]; then
         CHUNK_SIZE=$((CHUNK_SIZE_BASE + 1))
     else
         CHUNK_SIZE=$CHUNK_SIZE_BASE
     fi
-    
+
     # 使用 AWK 抽取該區塊的行並輸出到獨立檔案
     if [ "$CHUNK_SIZE" -gt 0 ]; then
         END_LINE=$((START_LINE + CHUNK_SIZE - 1))
-        
+
         SPLIT_OUTPUT_FILE="${TEMP_INPUT_PREFIX}$i"
-        
+
         # AWK 是一種高性能的行數選擇工具
         awk "NR >= $START_LINE && NR <= $END_LINE" $INPUT_FILE > "$SPLIT_OUTPUT_FILE"
         echo "Created file $SPLIT_OUTPUT_FILE: Lines $START_LINE to $END_LINE"
@@ -165,7 +165,7 @@ echo "Finished splitting file into $NUM_PROCS parts."
 # --- END 檔案切割 ---
 
 echo "Launching $NUM_PROCS parallel uncompression tasks..."
-start_uncomp=`date +%s` 
+start_uncomp=`date +%s`
 mkdir -p logs 2> /dev/null
 
 # 迴圈啟動所有工作進程 (ProcID 從 1 到 NUM_PROCS)
@@ -173,11 +173,40 @@ for i in $(seq 1 $NUM_PROCS); do
 	./uncompress.sh $order $compress $NEWCOMPRESS $i > logs/uncompress_proc_$i.log 2>&1 &
 done
 
-# 等待所有背景任務完成
-wait 
+
+wait
 end_uncomp=`date +%s`
 runtime3=$((end_uncomp - start_uncomp))
 echo $runtime3 seconds elapsed for parallel uncompression.
+# --- END PARALLEL EXECUTION ---
+
+# Lin : 合併 RESULTS (讓 match_pairs.cpp 或後續步驟能使用) ---
+# 1. 合併 A 序列結果
+echo "Merging filtered A sequences..."
+FINAL_OUTPUT_A="results/$order/$order-unique-filtered-a_final"
+rm -f "$FINAL_OUTPUT_A"
+
+for i in $(seq 1 $NUM_PROCS); do
+	WORKER_OUTPUT="results/$order/$order-uncomp-a_$i"
+	if [ -f "$WORKER_OUTPUT" ]; then
+		cat "$WORKER_OUTPUT" >> "$FINAL_OUTPUT_A"
+		rm "$WORKER_OUTPUT"
+	fi
+done
+
+# 2. 合併 B 序列結果
+echo "Merging filtered B sequences..."
+FINAL_OUTPUT_B="results/$order/$order-unique-filtered-b_final"
+rm -f "$FINAL_OUTPUT_B"
+for i in $(seq 1 $NUM_PROCS); do
+	WORKER_OUTPUT="results/$order/$order-uncomp-b_$i"
+	if [ -f "$WORKER_OUTPUT" ]; then
+		cat "$WORKER_OUTPUT" >> "$FINAL_OUTPUT_B"
+		rm "$WORKER_OUTPUT"
+	fi
+done
+
+echo "Merging complete. Final results are in: $FINAL_OUTPUT_A and $FINAL_OUTPUT_B"
 
 # cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime 2> /dev/null
 # cp results/$order/$order-pairs-found-0 results/$order-pairs-found 2> /dev/null

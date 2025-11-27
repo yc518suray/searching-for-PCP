@@ -23,7 +23,7 @@ double norm(fftw_complex dft) {
 
 int main(int argc, char ** argv) {
 
-    if (argc < 6) { 
+    if (argc < 6) {
         printf("Usage: uncompression <ORDER> <COMPRESS> <NEWCOMPRESS> <ProcNum> <InputFileName>\n");
         return -1;
     }
@@ -52,7 +52,7 @@ int main(int argc, char ** argv) {
 
     // 計算alphbaet, newalphabet, parts, partitions的部分移到平行化迴圈外
     std::set<int> alphabet;
-    
+
     if(COMPRESS % 2 == 0) {
         for(int i = 0; i <= COMPRESS; i += 2) {
             alphabet.insert(i);
@@ -113,11 +113,11 @@ int main(int argc, char ** argv) {
     }
     // 設定輸出檔案名稱並開啟
     char outafname[100], outbfname[100];
-    sprintf(outafname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, procnum);
-    sprintf(outbfname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, procnum);
-    
-    FILE * outa = fopen(outafname, "a"); 
-    FILE * outb = fopen(outbfname, "a"); 
+    sprintf(outafname, "results/%d/%d-uncomp-a_%d", ORDER, ORDER, procnum);
+    sprintf(outbfname, "results/%d/%d-uncomp-b_%d", ORDER, ORDER, procnum);
+
+    FILE * outa = fopen(outafname, "a");
+    FILE * outb = fopen(outbfname, "a");
 
     if (!outa || !outb) {
         printf("Error: Cannot open output files.\n");
@@ -127,9 +127,9 @@ int main(int argc, char ** argv) {
         fftw_destroy_plan(p);
         return -1;
     }
-  
+
     long long i = 1;
-    
+
     vector<int> origa;
     origa.resize(LEN);
     vector<int> origb;
@@ -147,7 +147,7 @@ int main(int argc, char ** argv) {
         while(file.good() && i < LEN) {
             file >> letter;
             // 檢查是否為空字串或無效輸入
-            if (letter.empty()) break; 
+            if (letter.empty()) break;
             try {
                 origa[i] = stoi(letter);
                 i++;
@@ -170,11 +170,11 @@ int main(int argc, char ** argv) {
                 break;
             }
         }
-        if (i < LEN) break; 
+        if (i < LEN) break;
 
         vector<int> seq;
         seq.resize(ORDER / NEWCOMPRESS);
-        
+
         // 原程式碼shift original的部分
         //shift original sequence such that the element with the largest number of permutations is in the front
         set<int> seta;
@@ -274,22 +274,19 @@ int main(int argc, char ** argv) {
                 for(unsigned int i = 0; i < seq.size(); i++) {
                     in[i][0] = (double)seq[i];
                     in[i][1] = 0;
-                } 
+                }
 
                 fftw_execute(p);
 
-                if(dftfilter(out, seq.size(), ORDER)) { 
-                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
-                        fprintf(outa, "%d",    (int)rint(norm(out[i])));
-                    }
-                    fprintf(outa, " ");
+                if(dftfilter(out, seq.size(), ORDER)) {
+
                     for(int num : seq) {
                             fprintf(outa, "%d ", num);
                     }
                     fprintf(outa, "\n");
                 }
             }
-            
+
             curr--;
 
             while((unsigned int)stack[curr] == partitions.at(origa[curr]).size() || (curr == 0 && stack[curr] == newfirsta.size())) {
@@ -306,7 +303,7 @@ int main(int argc, char ** argv) {
 
     printf("%llu A sequences checked\n", count);
     count = 0;
-    
+
     curr = 0;
     vector<int> stackb(LEN, 0);
     stack = stackb;
@@ -314,7 +311,7 @@ int main(int argc, char ** argv) {
     //partitions = partitionsB;
 
     std::fill(stack.begin(), stack.end(), 0);
-    
+
     while(curr != -1) {
 
         while(curr != LEN - 1) {
@@ -344,22 +341,19 @@ int main(int argc, char ** argv) {
                 for(unsigned int i = 0; i < seq.size(); i++) {
                     in[i][0] = (double)seq[i];
                     in[i][1] = 0;
-                } 
+                }
 
                 fftw_execute(p);
 
-                if(dftfilter(out, seq.size(), ORDER)) { 
-                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
-                        fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
-                    }
-                    fprintf(outb, " ");
+                if(dftfilter(out, seq.size(), ORDER)) {
+
                     for(int num : seq) {
                             fprintf(outb, "%d ", num);
                     }
                     fprintf(outb, "\n");
                 }
             }
-            
+
             curr--;
 
             while((unsigned int)stack[curr] == partitions.at(origb[curr]).size() || (curr == 0 && stack[curr] == newfirstb.size())) {
@@ -374,7 +368,7 @@ int main(int argc, char ** argv) {
     }
         lines_processed++;
     }
-    
+
     printf("Proc %d: Finished processing %lld lines.\n", procnum, lines_processed);
 
     fftw_free(in);
