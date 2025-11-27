@@ -71,8 +71,8 @@ int main(int argc, char ** argv) {
             seqb[i] = stoi(b);
         }
 
-        output = dft(seqa, input, output, plan);
-        output = dft(seqb, input, output, plan);
+       	output = dft(seqa, input, output, plan);
+       	output = dft(seqb, input, output, plan);
 
         for(int i = 0; i < LEN / NEWCOMPRESS; i++) {
             int sum = 0;

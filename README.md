@@ -1,4 +1,4 @@
-The first section of texts is from @yc518suray. The second section of texts is from the original README.
+The first part (Modifications) of texts is from @yc518suray. The second part of texts is from the original README.
 
 This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 130, as an midterm project in the class **Sequence Design for Communications** in NCKU, 2025 fall.
 
@@ -17,6 +17,7 @@ The `--start` option is used to start the program from some specific stage. `[St
 - `M` or `m` $\rightarrow$ matching
 - `U` or `u` $\rightarrow$ uncompression
 - `E` or `e` $\rightarrow$ equivalence filtering
+- `P` or `p` $\roghtarrow$ calculate PAPR of PCPs
 
 The `--stop` option is used to stop the program after some specific stage. `[Stage2]`is the stage after which the program stops. If this option is not provided, the program finishes as usual.
 
@@ -25,6 +26,14 @@ The `--stop` option is used to stop the program after some specific stage. `[Sta
 - `U` or `u` $\rightarrow$ uncompression
 
 If both options (along with the `Stage` parameters) are ignored, the script runs as usual.
+
+### Parallelization
+
+To accelerate the searching process, program parallelization is adopted, mainly through OpenMP and splitting files.
+
+### Trick
+
+In order to find PCP of length 106 and 130, within limited computation time, a Monte-Carlo method is used.
 
 ---
 

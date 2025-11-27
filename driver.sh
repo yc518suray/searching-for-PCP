@@ -54,9 +54,26 @@ mkdir results/$order 2> /dev/null
 
 echo Generating Candidates...
 
+NUM_OF_THREADS=32
+
 start=`date +%s`
-./bin/generate_hybrid $order $compress
+./bin/generate_hybrid $order $compress $NUM_OF_THREADS
 end=`date +%s`
+
+# merge files due to parallel processing
+NUM_FILE=32
+
+touch results/$order/$order-unique-filtered-a_1 
+touch results/$order/$order-unique-filtered-b_1 
+
+for i in $( seq 0 $((NUM_FILE - 1)) );
+do
+	cat results/$order/$order-unique-filtered-a_1-$i >> results/$order/$order-unique-filtered-a_1
+	cat results/$order/$order-unique-filtered-b_1-$i >> results/$order/$order-unique-filtered-b_1
+	rm results/$order/$order-unique-filtered-a_1-$i
+	rm results/$order/$order-unique-filtered-b_1-$i
+done
+# merge files done
 
 runtime1=$((end-start))
 echo $runtime1 seconds elapsed
@@ -243,3 +260,26 @@ cp results/$order-unique-pairs-found results/history/$order-1-$datetime-$epochti
 
 echo "Filtering Equivalences done, go see the results!"
 fi #finish Equivalence Filtering
+
+#  PAPR Calculation and Reporting  #
+
+if [[ -z "$option1" || ( "$option1" = "start" &&  "$letter1" = "P" ) ]];then 
+
+echo 
+echo -e "${CYAN_COLOR}Calculating PAPR of Unique Pairs...${NO_COLOR}"
+
+
+PAPR_LEN=$order
+
+./bin/PAPR $order $PAPR_LEN
+
+echo -e "${CYAN_COLOR}PAPR Calculation done.${NO_COLOR}"
+
+fi #finish PAPR Calculation
+
+# ---------- Exit if needed ---------- #
+if [ "$option2" = "stop" ] && [ "$letter2" = "P" ];then
+    echo -e "exit after finishing ${CYAN_COLOR}PAPR calculation${NO_COLOR} ... GOODBYE!"
+    exit 0
+fi
+

@@ -23,6 +23,7 @@ std::set<std::pair<int, int>> sumoftwosquares(int constant) {
     return solutions;
 }
 
+//Su: this could be time-consuming
 int PAF(vector<int> seq, int s) { 
     int result = 0;
     for(size_t i = 0; i < seq.size(); i++) {

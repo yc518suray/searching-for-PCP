@@ -46,6 +46,8 @@ int main(int argc, char ** argv) {
     fftw_complex *in, *out;
     fftw_plan p;
 
+	//Su: NEWCOMPRESS is used for multi-level uncompression
+
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (ORDER / NEWCOMPRESS));
     p = fftw_plan_dft_1d((ORDER) / NEWCOMPRESS, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -67,6 +69,7 @@ int main(int argc, char ** argv) {
 
     std::set<int> newalphabet;
 
+	//Su: by default NEWCOMPRESS = 1
     if(NEWCOMPRESS % 2 == 0) {
         for(int i = 0; i <= NEWCOMPRESS; i += 2) {
             newalphabet.insert(i);
@@ -85,7 +88,8 @@ int main(int argc, char ** argv) {
     std::map<int, std::vector<std::vector<int>>> partitions;
 
     //generate all permutations of possible decompositions for each letter in the alphabet
-    for(int letter : alphabet) {
+    //Su: could this be simplified?
+	for(int letter : alphabet) {
         partition.clear();
         for(std::vector<int> part : parts) {
             int sum = 0;
@@ -242,6 +246,9 @@ int main(int argc, char ** argv) {
     count = 0;
     curr = 0;
     std::fill(stack.begin(), stack.end(), 0);
+ 
+	vector<vector<double>> dftout;
+	vector<double> point(2, 0);
 
     while(curr != -1) {
 
@@ -277,9 +284,20 @@ int main(int argc, char ** argv) {
                 }
 
                 fftw_execute(p);
+				
+				dftout.clear();
+				for(unsigned int i = 0; i < seq.size(); i++)
+				{
+					point[0] = out[i][0];
+					point[1] = out[i][1];
+					dftout.push_back(point);
+				}
 
-                if(dftfilter(out, seq.size(), ORDER)) {
-
+                if(dftfilter(dftout, seq.size(), ORDER)) { 
+                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
+                        fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                    }
+                    fprintf(outa, " ");
                     for(int num : seq) {
                             fprintf(outa, "%d ", num);
                     }
@@ -345,8 +363,19 @@ int main(int argc, char ** argv) {
 
                 fftw_execute(p);
 
-                if(dftfilter(out, seq.size(), ORDER)) {
+				dftout.clear();
+				for(unsigned int i = 0; i < seq.size(); i++)
+				{
+					point[0] = out[i][0];
+					point[1] = out[i][1];
+					dftout.push_back(point);
+				}
 
+                if(dftfilter(dftout, seq.size(), ORDER)) { 
+                    for(unsigned int i = 0; i < seq.size() / 2; i++) {
+                        fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
+                    }
+                    fprintf(outb, " ");
                     for(int num : seq) {
                             fprintf(outb, "%d ", num);
                     }
@@ -377,4 +406,6 @@ int main(int argc, char ** argv) {
 
     fclose(outa);
     fclose(outb);
+
+	return 0;
 }
