@@ -54,9 +54,26 @@ mkdir results/$order 2> /dev/null
 
 echo Generating Candidates...
 
+NUM_OF_THREADS=32
+
 start=`date +%s`
-./bin/generate_hybrid $order $compress
+./bin/generate_hybrid $order $compress $NUM_OF_THREADS
 end=`date +%s`
+
+# merge files due to parallel processing
+NUM_FILE=32
+
+touch results/$order/$order-unique-filtered-a_1 
+touch results/$order/$order-unique-filtered-b_1 
+
+for i in $( seq 0 $((NUM_FILE - 1)) );
+do
+	cat results/$order/$order-unique-filtered-a_1-$i >> results/$order/$order-unique-filtered-a_1
+	cat results/$order/$order-unique-filtered-b_1-$i >> results/$order/$order-unique-filtered-b_1
+	rm results/$order/$order-unique-filtered-a_1-$i
+	rm results/$order/$order-unique-filtered-b_1-$i
+done
+# merge files done
 
 runtime1=$((end-start))
 echo $runtime1 seconds elapsed

@@ -115,40 +115,49 @@ std::set<int> spectrumthree(int len, int ORDER) {
     return spectrum;
 }
 
-fftw_complex * dft(vector<int> seq, fftw_complex * in, fftw_complex * out, fftw_plan p) {
+vector<vector<double>> dft(vector<int> seq, fftw_complex * in, fftw_complex * out, fftw_plan p) {
+	vector<vector<double>> dftout;
+	vector<double> point(2, 0);
     for(size_t i = 0; i < seq.size(); i++) {
         in[i][0] = (double)seq[i];
         in[i][1] = 0;
     } 
 
     fftw_execute(p);
-    
-    return out;
+
+	for(size_t i = 0; i < seq.size(); i++)
+	{
+		point[0] = out[i][0];
+		point[1] = out[i][1];
+		dftout.push_back(point);
+	}
+	return dftout;
 } 
 
-int floatEqual(float a, int b) {
+bool floatEqual(float a, int b) {
     if(a == b) {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
-int dftfilter(fftw_complex * seqdft, int len, int ORDER) {
+bool dftfilter(vector<vector<double>> seqdft, int len, int ORDER) {
 
     if(len % 2 == 0) {
         int j = len / 2;
-        float complex = seqdft[j][0] * seqdft[j][0] + seqdft[j][1] * seqdft[j][1];
-        if(!floatEqual(complex, decomps[ORDER][0][1] * decomps[ORDER][0][1]) && !floatEqual(complex, decomps[ORDER][0][0] * decomps[ORDER][0][0]) ) {
-            return 0;
+        float complexn = seqdft[j][0] * seqdft[j][0] + seqdft[j][1] * seqdft[j][1];
+        if(!floatEqual(complexn, decomps[ORDER][0][1] * decomps[ORDER][0][1]) && !floatEqual(complexn, decomps[ORDER][0][0] * decomps[ORDER][0][0]) ) {
+            return false;
         }
     }
     
     for(int i = 0; i < len / 2; i++) {
         if((seqdft[i][0] * seqdft[i][0] + seqdft[i][1] * seqdft[i][1]) > BOUND + 0.001) {
-            return 0;
-        }
+            return false;
+		}
     }
-    return 1;
+
+    return true;
 }
 
 int dftfilterpair(fftw_complex *dftA, fftw_complex *dftB, int len) {

@@ -220,7 +220,10 @@ int main(int argc, char ** argv) {
     int curr = 0;
     vector<int> stack(LEN, 0);
     
-    printf("Uncompressing A\n");
+	vector<vector<double>> dftout;
+	vector<double> point(2, 0);
+    
+	printf("Uncompressing A\n");
 
     while(curr != -1) {
 
@@ -256,8 +259,16 @@ int main(int argc, char ** argv) {
                 } 
 
                 fftw_execute(p);
+				
+				dftout.clear();
+				for(unsigned int i = 0; i < seq.size(); i++)
+				{
+					point[0] = out[i][0];
+					point[1] = out[i][1];
+					dftout.push_back(point);
+				}
 
-                if(dftfilter(out, seq.size(), ORDER)) { 
+                if(dftfilter(dftout, seq.size(), ORDER)) { 
                     for(unsigned int i = 0; i < seq.size() / 2; i++) {
                         fprintf(outa, "%d",    (int)rint(norm(out[i])));
                     }
@@ -292,7 +303,7 @@ int main(int argc, char ** argv) {
 
     //partitions = partitionsB;
     
-    while(curr != -1) {
+	while(curr != -1) {
 
         while(curr != LEN - 1) {
             std::vector<int> permutation = partitions.at(origb[curr])[stack[curr]];
@@ -325,7 +336,15 @@ int main(int argc, char ** argv) {
 
                 fftw_execute(p);
 
-                if(dftfilter(out, seq.size(), ORDER)) { 
+				dftout.clear();
+				for(unsigned int i = 0; i < seq.size(); i++)
+				{
+					point[0] = out[i][0];
+					point[1] = out[i][1];
+					dftout.push_back(point);
+				}
+
+                if(dftfilter(dftout, seq.size(), ORDER)) { 
                     for(unsigned int i = 0; i < seq.size() / 2; i++) {
                         fprintf(outb, "%d",    ORDER * 2 - (int)rint(norm(out[i])));
                     }

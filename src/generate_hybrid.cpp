@@ -1,6 +1,5 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<time.h>
 #include<vector>
 #include<set>
 #include<array>
@@ -19,7 +18,7 @@ using namespace std;
 void writeSeq(FILE * out, vector<int> seq);
 
 //Su: actually it's norm squared
-double norm(fftw_complex dft) {
+double norm(vector<double> dft) {
     return dft[0] * dft[0] + dft[1] * dft[1];
 }
 
@@ -43,39 +42,47 @@ bool nextBranch(vector<int>& seq, unsigned int len, set<int> alphabet);
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet);
 
+/*----------main----------*/
+
 int main(int argc, char ** argv) {
 
     int ORDER = stoi(argv[1]);
     int COMPRESS = stoi(argv[2]);
     int LEN = ORDER / COMPRESS;
+	const int NUM_PARA_THREADS = stoi(argv[3]);
 
-	//Su: FFTW multi-thread init
-	fftw_init_threads();
-	fftw_plan_with_nthreads(omp_get_max_threads());
+	//Su: FFTW plan initialization for each thread
+	fftw_complex * in[NUM_PARA_THREADS];
+	fftw_complex * out[NUM_PARA_THREADS];
+	fftw_plan plan[NUM_PARA_THREADS];
+	for(int i = 0; i < NUM_PARA_THREADS; i++)
+	{
+		in[i] = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
+    	out[i] = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
+    	plan[i] = fftw_plan_dft_1d(LEN, in[i], out[i], FFTW_FORWARD, FFTW_MEASURE);
+	}
 
-    fftw_complex *in, *out;
-    fftw_plan plan;
+	//Su: OpenMP settings
+	omp_set_dynamic(0);	
+	omp_set_num_threads(NUM_PARA_THREADS);
 
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * LEN);
-    plan = fftw_plan_dft_1d(LEN, in, out, FFTW_FORWARD, FFTW_MEASURE);
-
-    //Su: maybe FFTW_ESTIMATE can be replaced with FFT_MEASURE?
-    //Su: FFTW_MEASURE -> measure time for different methods and find optimum
-    //Su: FFTW_ESTIMATE -> find a sub-optimal method to the plan
-
-    //write classes to file
-    char fname[100];
-    sprintf(fname, "results/%d/%d-unique-filtered-a_%d", ORDER, ORDER, 1);
-    FILE * outa = fopen(fname, "w");
-
-    sprintf(fname, "results/%d/%d-unique-filtered-b_%d", ORDER, ORDER, 1);
-    FILE * outb = fopen(fname, "w");
-
-    unsigned long long int count = 0;
+	//Su: output file settings
+	char fname[100];
+	FILE * outa [NUM_PARA_THREADS];
+	FILE * outb [NUM_PARA_THREADS];
+	for(int i = 0; i < NUM_PARA_THREADS; i++)
+	{
+    	sprintf(fname, "results/%d/%d-unique-filtered-a_%d-%d", ORDER, ORDER, 1, i);
+    	outa[i] = fopen(fname, "w");
+    	sprintf(fname, "results/%d/%d-unique-filtered-b_%d-%d", ORDER, ORDER, 1, i);
+    	outb[i] = fopen(fname, "w");
+	}
+    
+	//Su: generation settings
+	unsigned long long int count = 0;
 
     std::set<int> alphabet;
- 
+
     if(COMPRESS % 2 == 0) {
         for(int i = 0; i <= COMPRESS; i += 2) {
             alphabet.insert(i);
@@ -88,30 +95,36 @@ int main(int argc, char ** argv) {
         }
     }
 
-    set<vector<int>> partialsols;
     vector<int> seq;
-	
-	//Su: parallelization
+	set<vector<int>> generatorsA;
+	set<vector<int>> generatorsB;
 	#pragma omp parallel sections
 	{
-    	#pragma omp section
-		{
-			set<vector<int>> generatorsA = constructGenerators(0, LEN);
-    	}
 		#pragma omp section
 		{
-			set<vector<int>> generatorsB = constructGenerators(1, LEN);
+			generatorsA = constructGenerators(0, LEN);
+		}	
+		#pragma omp section
+		{
+			generatorsB = constructGenerators(1, LEN);
 		}
 	}
 
 	//Su: flag = 0 --> decimation equivalents are generated
 	//Su: flag = 1 --> decimation equivalents NOT generated
 
-    //vector<int> test = {1};
 	bool stop_branching = false;
-
-	//int cnt = 0;
-
+	vector<vector<int>> combinations = getCombinations(LEN - LEN / 2, alphabet);
+	
+	//Su: start generation
+	#pragma omp parallel
+	{
+	int tid = 0;
+	#pragma omp single
+	{
+	int nthreads = omp_get_num_threads();
+	printf("nthreads = %d\n", nthreads);
+	
 	//Su: seq is of size 0 at the beginning
     while(!stop_branching && nextBranch(seq, LEN / 2, alphabet)) {
 
@@ -122,97 +135,92 @@ int main(int argc, char ** argv) {
 				break;
             }
         }
-		
-		//Su: integer partition
-        if(!stop_branching && (int)seq.size() == LEN / 2) {
+	
+		//Su: integer partition, parallelized
+        if(!stop_branching && (int)seq.size() == LEN / 2) {   
 
-			//cnt++;
-			//printf("No.%*d, orderly generation = ", 8, cnt);
-			//for(size_t i = 0; i < seq.size(); i++)
-			//{
-			//	printf("%*d ", 2, seq[i]);
-			//}
-			//printf("\n");
-
-            //finish the constructions
-            vector<vector<int>> combinations = getCombinations(LEN - seq.size(), alphabet);
+			//finish the constructions
             std::vector<std::vector<int>> rowcombo;
-
             for(std::vector<int> combo : combinations) {
                 int sum = rowsum(combo);
-                if(sum == decomps[ORDER][0][0] - rowsum(seq) || sum == decomps[ORDER][0][1] - rowsum(seq)) {
+                if(sum == decomps[ORDER][0][0] - rowsum(seq) ||\
+				   sum == decomps[ORDER][0][1] - rowsum(seq)) {
                     rowcombo.push_back(combo);
                 }
-            }  
+            }
 
-            for(vector<int> tail : rowcombo) {
-
+			#pragma omp taskloop grainsize(1) firstprivate(seq) shared(count)
+            for(size_t i = 0; i < rowcombo.size(); i++) {
+				tid = omp_get_thread_num();
+				
+				vector<int> tail = rowcombo[i];
                 sort(tail.begin(), tail.end());
-
                 vector<int> newseq = seq;
-                
                 newseq.insert(newseq.end(), tail.begin(), tail.end());
 
-                do {
-
+				do
+                {
+					//Su: not lexicographically minimal
                     if(newseq.back() == *alphabet.begin()) {
                         continue;
                     }
 
                     if(rowsum(newseq) == decomps[ORDER][0][0]) {
-                        //Su: out = DFT of newseq
-						out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
+						vector<vector<double>> outdft = dft(newseq, in[tid], out[tid], plan[tid]);
+                        if(dftfilter(outdft, LEN, ORDER) && isCanonical(newseq, generatorsA)) {
 							count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outa, "%d",    (int)rint(norm(out[i])));
+                                fprintf(outa[tid], "%d", (int)rint(norm(outdft[i])));
                             }
-                            fprintf(outa, " ");
-                            writeSeq(outa, newseq);
-                            fprintf(outa, "\n");
-                           	//Su: the following is for debugging?
-							//if(newseq == test) {
-                            //	printf("REPEAT!\n");
-                            //	for(size_t i = 0; i < newseq.size(); i++) {
-                            //    	printf("%d ", newseq[i]);
-                            //	}
-                            //	printf("\n");
-                        	//}
-                        	//test = newseq;
+                            fprintf(outa[tid], " ");
+                            writeSeq(outa[tid], newseq);
+                            fprintf(outa[tid], "\n");
                         }
                     }
 
                     if(rowsum(newseq) == decomps[ORDER][0][1]) {
-                        out = dft(newseq, in, out, plan);
-                        if(dftfilter(out, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
-                            count++;
+                        vector<vector<double>> outdft= dft(newseq, in[tid], out[tid], plan[tid]);
+                        if(dftfilter(outdft, LEN, ORDER) && isCanonical(newseq, generatorsB)) {
+							count++;
                             for(int i = 0; i < LEN / 2; i++) {
-                                fprintf(outb, "%d",   ORDER * 2 - (int)rint(norm(out[i])));
+                                fprintf(outb[tid], "%d",\
+										ORDER * 2 - (int)rint(norm(outdft[i])));
                             }
-                            fprintf(outb, " ");
-                            writeSeq(outb, newseq);
-                            fprintf(outb, "\n");
+                            fprintf(outb[tid], " ");
+                            writeSeq(outb[tid], newseq);
+                            fprintf(outb[tid], "\n");
                         }
                     }
-
-                } while(next_permutation(newseq.begin() + LEN / 2, newseq.end()));
-                
+				} while(next_permutation(newseq.begin() + LEN / 2, newseq.end()));
             }
+			#pragma omp taskwait
         }
-    }
+    } //Su: end of while loop for integer partition part
+	} //Su: end of omp single
+	} //Su: end of omp parallel
+	
+	//Su: close output file
+	for(int i = 0; i < NUM_PARA_THREADS; i++)
+	{
+		fclose(outa[i]);
+		fclose(outb[i]);
+	} 
+	
+	//Su: free FFTW memories
+	for(int i = 0; i < NUM_PARA_THREADS; i++)
+	{
+		fftw_free(in[i]);
+    	fftw_free(out[i]);
+    	fftw_destroy_plan(plan[i]);
+	}
 
-    printf("%llu\n", count);
-
-    fftw_free(in);
-    fftw_free(out);
-    fftw_destroy_plan(plan);
-
-    fclose(outa);
-	//Su: why not close file "outb"?
-	fclose(outb);
- 
+	printf("%llu\n", count);
+	
 	return 0;  
 }
+
+/*----------function definitions----------*/
+
 template<class BidirIt>
 bool nextPermutation(BidirIt first, BidirIt last, set<int> alphabet) {
     int min = *std::min_element(alphabet.begin(), alphabet.end());

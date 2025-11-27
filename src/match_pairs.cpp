@@ -10,12 +10,11 @@
 #include<limits>
 
 int main(int argc, char ** argv) {
-
     int ORDER = stoi(argv[1]);
-    int LEN = stoi(argv[2]);
-    int procnum = stoi(argv[3]);
-
-    printf("Matching\n");
+	int LEN = stoi(argv[2]);
+	int procnum = stoi(argv[3]);
+    
+	printf("Matching\n");
     
         char fname[100];
         sprintf(fname, "results/%d/%d-pairs-found_%d", ORDER, ORDER, procnum);
