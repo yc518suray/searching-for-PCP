@@ -8,7 +8,7 @@
     order=$1
     compress=$2
     newcompress=$3 # = 1
-    proc=$4 # = 0
+    proc=$4
 
     start=`date +%s`
 

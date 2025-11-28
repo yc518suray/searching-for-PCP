@@ -1,6 +1,6 @@
 The first part (Modifications) of texts is from @yc518suray. The second part of texts is from the original README.
 
-This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 130, as an midterm project in the class **Sequence Design for Communications** in NCKU, 2025 fall.
+This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 130, as an midterm project in the class **Sequence Design for Communications** in NCKU CCE, 2025 fall.
 
 ## Modifications
 
@@ -24,6 +24,9 @@ The `--stop` option is used to stop the program after some specific stage. `[Sta
 - `G` or `g` $\rightarrow$ candidate generation
 - `M` or `m` $\rightarrow$ matching
 - `U` or `u` $\rightarrow$ uncompression
+- `E` or `e` $\rightarrow$ equivalence filtering
+
+A **PAPR calculation** stage is added. Therefore, if you don't want to calculate the PAPR of each found unique PCP, you can stop the program after equivalence filtering.
 
 If both options (along with the `Stage` parameters) are ignored, the script runs as usual.
 
@@ -33,7 +36,23 @@ To accelerate the searching process, program parallelization is adopted, mainly 
 
 ### Trick
 
-In order to find PCP of length 106 and 130, within limited computation time, a Monte-Carlo method is used.
+In order to find PCP of length 106 and 130, within limited computation time, a Monte-Carlo approach is adopted to speed up the uncompression stage.
+
+### Verifaction
+
+We provide a program to verify that the found pairs are actually PCPs. Compile:
+
+```bash
+g++ -Wall -g -O3 verify_pcp.cpp -o verofy_pcp
+```
+
+Usage:
+
+```bash
+./verify_pcp.exe [path_to_file] [Length]
+```
+
+Pull requests with explanations are welcome.
 
 ---
 

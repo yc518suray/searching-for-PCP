@@ -190,7 +190,7 @@ int main(int argc, char ** argv) {
         for(int element : origb) {
             setb.insert(element);
         }
-        int max = 0;
+        long long unsigned int max = 0;
         int best = *seta.begin(); // 初始化為集合第一個元素
         for(int element : seta) {
             if(partitions.at(element).size() > max) {
@@ -307,7 +307,7 @@ int main(int argc, char ** argv) {
 
             curr--;
 
-            while((unsigned int)stack[curr] == partitions.at(origa[curr]).size() || (curr == 0 && stack[curr] == newfirsta.size())) {
+            while((unsigned int)stack[curr] == partitions.at(origa[curr]).size() || (curr == 0 && (unsigned int)stack[curr] == newfirsta.size())) {
                 stack[curr] = 0;
                 curr--;
                 if(curr == -1) {
@@ -385,7 +385,7 @@ int main(int argc, char ** argv) {
 
             curr--;
 
-            while((unsigned int)stack[curr] == partitions.at(origb[curr]).size() || (curr == 0 && stack[curr] == newfirstb.size())) {
+            while((unsigned int)stack[curr] == partitions.at(origb[curr]).size() || (curr == 0 && (unsigned int)stack[curr] == newfirstb.size())) {
                 stack[curr] = 0;
                 curr--;
                 if(curr == -1) {

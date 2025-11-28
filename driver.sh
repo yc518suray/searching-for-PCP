@@ -133,7 +133,7 @@ then
 
 # --- 平行化開始 ---
 # 定義平行化參數
-NUM_PROCS=3      # <-- 請根據你的 CPU 核心數設定
+NUM_PROCS=8      # <-- 請根據你的 CPU 核心數設定
 NEWCOMPRESS=1    # <-- 最終解壓縮的目標因子 (通常是 1)
 INPUT_FILE="results/$order-pairs-found"
 
@@ -190,7 +190,6 @@ for i in $(seq 1 $NUM_PROCS); do
 	./uncompress.sh $order $compress $NEWCOMPRESS $i > logs/uncompress_proc_$i.log 2>&1 &
 done
 
-
 wait
 end_uncomp=`date +%s`
 runtime3=$((end_uncomp - start_uncomp))
@@ -200,7 +199,7 @@ echo $runtime3 seconds elapsed for parallel uncompression.
 # Lin : 合併 RESULTS (讓 match_pairs.cpp 或後續步驟能使用) ---
 # 1. 合併 A 序列結果
 echo "Merging filtered A sequences..."
-FINAL_OUTPUT_A="results/$order/$order-unique-filtered-a_final"
+FINAL_OUTPUT_A="results/$order/$order-unique-filtered-a_0"
 rm -f "$FINAL_OUTPUT_A"
 
 for i in $(seq 1 $NUM_PROCS); do
@@ -213,7 +212,7 @@ done
 
 # 2. 合併 B 序列結果
 echo "Merging filtered B sequences..."
-FINAL_OUTPUT_B="results/$order/$order-unique-filtered-b_final"
+FINAL_OUTPUT_B="results/$order/$order-unique-filtered-b_0"
 rm -f "$FINAL_OUTPUT_B"
 for i in $(seq 1 $NUM_PROCS); do
 	WORKER_OUTPUT="results/$order/$order-uncomp-b_$i"
@@ -224,6 +223,9 @@ for i in $(seq 1 $NUM_PROCS); do
 done
 
 echo "Merging complete. Final results are in: $FINAL_OUTPUT_A and $FINAL_OUTPUT_B"
+
+./match.sh $order $(($order / $NEWCOMPRESS)) 0
+cp results/$order/$order-pairs-found_0 results/$order-pairs-found
 
 # cp results/$order/$order-pairs-found-0 results/history/$order-1-$datetime-$epochtime 2> /dev/null
 # cp results/$order/$order-pairs-found-0 results/$order-pairs-found 2> /dev/null
@@ -242,6 +244,8 @@ fi
 
 # ---------- Equivalence Filtering ---------- #
 if [[ -z "$option1" || ( "$option1" = "start" &&  "$letter1" = "E" ) ]];then #start Equivalence Filtering
+
+option1=""
 
 echo Filtering Equivalences...
 

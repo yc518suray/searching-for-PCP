@@ -31,7 +31,7 @@ double calculate_papr_linear(const std::vector<std::complex<double>>& time_domai
     }
 
     double average_power = total_power / N;
-    
+
     if (average_power == 0.0) {
         return 0.0; 
     }
@@ -74,9 +74,9 @@ int main(int argc, char ** argv) {
     std::string line;
     int pair_count = 0;
     
-    std::cout << "\n--- Golay Pair PAPR  ---\n";
+    std::cout << "---    Golay Pair PAPR    ---\n";
     std::cout << "Pair |  PAPR (A)  |  PAPR (B)\n";
-    std::cout << "-----------------------------------\n";
+    std::cout << "--------------------------------\n";
     std::cout << std::fixed << std::setprecision(6); // increase output precision
 
     while (std::getline(infile, line)) {
@@ -108,9 +108,9 @@ int main(int argc, char ** argv) {
         vector<vector<double>> xA_fft = dft(seqa, in, out, p_ifft); 
         std::vector<std::complex<double>> xA_time_domain;
 
-		for(int i = 0; i < N; ++i) {
+		for(int i = 0; i < Noversample; ++i) {
             // IFFT output devided by N normalization
-            xA_time_domain.emplace_back(oversampling * xA_fft[i][0] / N, oversampling * xA_fft[i][1] / N); 
+            xA_time_domain.emplace_back(xA_fft[i][0] / Noversample, xA_fft[i][1] / Noversample); 
         }
         double paprA_linear = calculate_papr_linear(xA_time_domain);
 
@@ -118,8 +118,8 @@ int main(int argc, char ** argv) {
         vector<vector<double>> xB_fft = dft(seqb, in, out, p_ifft); 
         std::vector<std::complex<double>> xB_time_domain;
         
-		for(int i = 0; i < N; ++i) {
-            xB_time_domain.emplace_back(oversampling * xB_fft[i][0] / N, oversampling * xB_fft[i][1] / N); 
+		for(int i = 0; i < Noversample; ++i) {
+            xB_time_domain.emplace_back(xB_fft[i][0] / Noversample, xB_fft[i][1] / Noversample); 
         }
         double paprB_linear = calculate_papr_linear(xB_time_domain);
 
