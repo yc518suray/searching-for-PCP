@@ -1,6 +1,6 @@
 The first part (Modifications) of texts is from @yc518suray. The second part of texts is from the original README.
 
-This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 130, as an midterm project in the class **Sequence Design for Communications** in NCKU CCE, 2025 fall.
+This repository is forked from @tylerlumsden. The codes are used to search for periodic Golay pairs (PGPs or PCPs) with lengths up to 90, 106 and 130, as an midterm project in the class **Sequence Design for Communications** in NCKU CCE, 2025 fall.
 
 ## Modifications
 
@@ -52,9 +52,13 @@ Note that the parameter `number_of_files` should be the same as the parameter `N
 
 Afterwards, a file `rd_select.out` is generated. Put this file in the `results/130` directory, and specify the specific selection you would like to uncompress in the uncompress.sh script, by setting the parameter `SELECT`. `SELECT=1` means that the first line (selection #1) of `rd_select.out` is used, `SELECT=69` means that the 69th line (selection #69) of `rd_select.out` is used, etc.
 
+This trick can be used to accelerate uncompression. For example, suppose there are 1001 selections in the file `rd_select.out`. We can have 1001 computers work on each selection. So this trick can also be used to parallelized the uncompression process.
+
 ### Verifaction
 
-We provide a program to verify that the found pairs are actually PCPs. Compile:
+We provide a program to verify that the found pairs are actually PCPs.
+
+Compile:
 
 ```bash
 g++ -Wall -g -O3 verify_pcp.cpp -o verofy_pcp

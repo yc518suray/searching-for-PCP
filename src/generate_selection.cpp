@@ -14,17 +14,17 @@ using namespace std;
 int main(int argc, char ** argv)
 {
 	int num_col = stoi(argv[1]);
-	int num_select = stoi(argv[2]);
+	int num_per_select = stoi(argv[2]);
 	int num_procs = stoi(argv[3]);
 
 	int num_col_proc = num_col / num_procs; // number of total columns, per process
 
-	vector<int> array(num_col_proc);
-	for(int i = 0; i < num_col_proc; i++) array[i] = i + 1;
+	vector<int> all_array(num_col_proc);
+	for(int i = 0; i < num_col_proc; i++) all_array[i] = i + 1;
 
 	// random permutation of array
 	int seed = 42; // random seed, can be changed
-	std::shuffle(array.begin(), array.end(), std::default_random_engine(seed));
+	std::shuffle(all_array.begin(), all_array.end(), std::default_random_engine(seed));
 
 	// output random selections
 	int cnt = 0;
@@ -32,11 +32,28 @@ int main(int argc, char ** argv)
 	sprintf(fname, "rd_select.out");
 	FILE * outfile;
 	outfile = fopen(fname, "w");
+
+	vector<int> array;
+	vector<int> tmp_array;
+	tmp_array.resize(num_per_select);
+	for(int i = 0; i < num_col_proc; i++)
+	{
+		cnt++;
+		tmp_array[i % num_per_select] = all_array[i];
+		if(cnt == num_per_select)
+		{
+			cnt = 0;
+			sort(tmp_array.begin(), tmp_array.end());
+			array.insert(array.begin(), tmp_array.begin(), tmp_array.end());
+		}
+	}
+
+	cnt = 0;
 	for(int i = 0; i < num_col_proc; i++)
 	{
 		cnt++;
 		fprintf(outfile, "%d ", array[i]);
-		if(cnt == num_select)
+		if(cnt == num_per_select)
 		{
 			cnt = 0;
 			fprintf(outfile, "%d\n", -1);

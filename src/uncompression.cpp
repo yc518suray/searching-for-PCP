@@ -24,7 +24,7 @@ double norm(fftw_complex dft) {
 int main(int argc, char ** argv) {
 
     if (argc < 6) {
-        printf("Usage: uncompression <ORDER> <COMPRESS> <NEWCOMPRESS> <ProcNum> <InputFileName>\n");
+        printf("Usage: uncompression <ORDER> <COMPRESS> <NEWCOMPRESS> <ProcNum> <InputFileName> <SELECT>\n");
         return -1;
     }
     // 重新定義參數讀取
@@ -36,25 +36,35 @@ int main(int argc, char ** argv) {
 	int SELECT = stoi(argv[6]);
 
     int LEN = ORDER / COMPRESS;
+	bool SELECT_FLAG = true;
+	if(SELECT == -1) SELECT_FLAG = false;
 
     printf("Proc %d: Uncompressing sequence of length %d, reading from %s\n", procnum, LEN, input_filename.c_str());
 
 	//Su: read the line select file
     vector<int> select_line;
 
-	char fname[100];
-    sprintf(fname, "results/%d/rd_select.out", ORDER);
-    ifstream infile(fname);
-	
-	int line_num;
+	char select_fname[100];
+    sprintf(select_fname, "results/%d/rd_select.out", ORDER);
+    ifstream infile(select_fname);
+    if(SELECT_FLAG && !infile) {
+        printf("Error: RD_SELECT FILE UNAVAILABLE\n");
+        return -1;
+    }
+
 	string line;
-	for(int i = 0; i < SELECT - 1; i++) getline(infile, line);
-	infile>>line_num;
-	while(line_num != -1)
+	if(SELECT_FLAG)
 	{
-		select_line.push_back(line_num);
+		int line_num;
+		for(int i = 0; i < SELECT - 1; i++) getline(infile, line);
 		infile>>line_num;
+		while(line_num != -1)
+		{
+			select_line.push_back(line_num);
+			infile>>line_num;
+		}
 	}
+	infile.close();
 
 	//Su: FFTW multi-thread init
 	fftw_init_threads();
@@ -123,6 +133,7 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
 
+	char fname[50];
     sprintf(fname, "results/%d-pairs-found", ORDER);
     std::ifstream file(input_filename);
     std::string letter;
@@ -193,8 +204,9 @@ int main(int argc, char ** argv) {
         if (i < LEN) break;
 
 		//Su: if this line is not the selected line, skip this line
-		if((lines_processed + 1) != select_line.front())
+		if(SELECT_FLAG && ((lines_processed + 1) != select_line.front()))
 		{
+			lines_processed++;
 			continue;
 		}
 		select_line.erase(select_line.begin());
