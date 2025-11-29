@@ -36,7 +36,21 @@ To accelerate the searching process, program parallelization is adopted, mainly 
 
 ### Trick
 
-In order to find PCP of length 106 and 130, within limited computation time, a Monte-Carlo approach is adopted to speed up the uncompression stage.
+In order to find PCP of length 106 and 130, within limited computation time, a random-selection approach is adopted. It's basically a random selection of the compressed pairs. To this end, first compile the source code `src/generate_selection.cpp`. Then use this program as follows:
+
+```bash
+./generate_selection.exe [total_lines] [lines_per_execution] [number_of_files]
+```
+
+For example, in the case of L = 130, if the total number of lines in **130-pairs-found** is 10000, and the uncompression stage splits file **130-pairs-found** into 12 files (for parallelization). You might want to uncompress 100 lines for each uncompression.exe execution, then the command goes like:
+
+```bash
+./generate_selection.exe 10000 100 12
+```
+
+Note that the parameter `number_of_files` should be the same as the parameter `NUM_PROCS` in the driver script `driver.sh`. Otherwise, the result is unexpected.
+
+Afterwards, a file `rd_select.out` is generated. Put this file in the `results/130` directory, and specify the specific selection you would like to uncompress in the uncompress.sh script, by setting the parameter `SELECT`. `SELECT=1` means that the first line (selection #1) of `rd_select.out` is used, `SELECT=69` means that the 69th line (selection #69) of `rd_select.out` is used, etc.
 
 ### Verifaction
 

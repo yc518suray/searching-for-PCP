@@ -20,7 +20,10 @@
         exit 1
     fi
 
-    ./bin/uncompression $order $compress $newcompress $proc $INPUT_FILE
+	#Su: change this parameter for every execution
+	SELECT=1
+
+    ./bin/uncompression $order $compress $newcompress $proc $INPUT_FILE $SELECT
 
     end=`date +%s`
     runtime3=$((end-start))

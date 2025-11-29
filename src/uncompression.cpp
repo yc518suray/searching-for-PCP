@@ -33,10 +33,28 @@ int main(int argc, char ** argv) {
     int NEWCOMPRESS = stoi(argv[3]);
     int procnum = stoi(argv[4]);
     std::string input_filename = argv[5]; // 讀取傳入的分割檔案名稱
+	int SELECT = stoi(argv[6]);
 
     int LEN = ORDER / COMPRESS;
 
     printf("Proc %d: Uncompressing sequence of length %d, reading from %s\n", procnum, LEN, input_filename.c_str());
+
+	//Su: read the line select file
+    vector<int> select_line;
+
+	char fname[100];
+    sprintf(fname, "results/%d/rd_select.out", ORDER);
+    ifstream infile(fname);
+	
+	int line_num;
+	string line;
+	for(int i = 0; i < SELECT - 1; i++) getline(infile, line);
+	infile>>line_num;
+	while(line_num != -1)
+	{
+		select_line.push_back(line_num);
+		infile>>line_num;
+	}
 
 	//Su: FFTW multi-thread init
 	fftw_init_threads();
@@ -105,10 +123,8 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
 
-    char fname[100];
     sprintf(fname, "results/%d-pairs-found", ORDER);
     std::ifstream file(input_filename);
-    std::string line;
     std::string letter;
 
     if(!file) {
@@ -175,6 +191,13 @@ int main(int argc, char ** argv) {
             }
         }
         if (i < LEN) break;
+
+		//Su: if this line is not the selected line, skip this line
+		if((lines_processed + 1) != select_line.front())
+		{
+			continue;
+		}
+		select_line.erase(select_line.begin());
 
         vector<int> seq;
         seq.resize(ORDER / NEWCOMPRESS);
@@ -302,6 +325,7 @@ int main(int argc, char ** argv) {
                             fprintf(outa, "%d ", num);
                     }
                     fprintf(outa, "\n");
+					fflush(outa);
                 }
             }
 
@@ -380,6 +404,7 @@ int main(int argc, char ** argv) {
                             fprintf(outb, "%d ", num);
                     }
                     fprintf(outb, "\n");
+					fflush(outb);
                 }
             }
 
@@ -396,7 +421,7 @@ int main(int argc, char ** argv) {
         }
     }
         lines_processed++;
-    }
+    }//Su: the while(file.good()) loop
 
     printf("Proc %d: Finished processing %lld lines.\n", procnum, lines_processed);
 

@@ -133,7 +133,7 @@ then
 
 # --- 平行化開始 ---
 # 定義平行化參數
-NUM_PROCS=8      # <-- 請根據你的 CPU 核心數設定
+NUM_PROCS=12      # <-- 請根據你的 CPU 核心數設定
 NEWCOMPRESS=1    # <-- 最終解壓縮的目標因子 (通常是 1)
 INPUT_FILE="results/$order-pairs-found"
 
