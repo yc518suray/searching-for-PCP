@@ -46,6 +46,12 @@ int main(int argc, char ** argv)
 			sort(tmp_array.begin(), tmp_array.end());
 			array.insert(array.begin(), tmp_array.begin(), tmp_array.end());
 		}
+		else if(i == num_col_proc - 1)
+		{
+			sort(tmp_array.begin(), tmp_array.end());
+			array.insert(array.begin(), tmp_array.begin(), tmp_array.end());
+		}
+		else;
 	}
 
 	cnt = 0;
@@ -58,6 +64,8 @@ int main(int argc, char ** argv)
 			cnt = 0;
 			fprintf(outfile, "%d\n", -1);
 		}
+		else if(i == num_col_proc - 1) fprintf(outfile, "%d\n", -1);
+		else;
 	}
 	fclose(outfile);
 
