@@ -21,6 +21,7 @@
     fi
 
 	#Su: change this parameter for every execution
+	#Su: SELECT=-1 disables the random selection function
 	SELECT=1
 
     ./bin/uncompression $order $compress $newcompress $proc $INPUT_FILE $SELECT

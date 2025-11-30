@@ -32,7 +32,7 @@ If both options (along with the `Stage` parameters) are ignored, the script runs
 
 ### Parallelization
 
-To accelerate the searching process, program parallelization is adopted, mainly through OpenMP and splitting files.
+To accelerate the searching process, parallelized computing is adopted, mainly through OpenMP and splitting files.
 
 ### Trick
 
@@ -50,9 +50,9 @@ For example, in the case of L = 130, if the total number of lines in **130-pairs
 
 Note that the parameter `number_of_files` should be the same as the parameter `NUM_PROCS` in the driver script `driver.sh`. Otherwise, the result is unexpected.
 
-Afterwards, a file `rd_select.out` is generated. Put this file in the `results/130` directory, and specify the specific selection you would like to uncompress in the uncompress.sh script, by setting the parameter `SELECT`. `SELECT=1` means that the first line (selection #1) of `rd_select.out` is used, `SELECT=69` means that the 69th line (selection #69) of `rd_select.out` is used, etc.
+Afterwards, a file `rd_select.out` is generated. Put this file in the `results/130` directory, and specify the specific selection you would like to uncompress in the uncompress.sh script, by setting the parameter `SELECT`. `SELECT=1` means that the first line (selection #1) of `rd_select.out` is used, `SELECT=69` means that the 69th line (selection #69) of `rd_select.out` is used, etc. `SELECT=-1` disables the random selection function, and all lines will be uncompressed.
 
-This trick can be used to accelerate uncompression. For example, suppose there are 1001 selections in the file `rd_select.out`. We can have 1001 computers work on each selection. So this trick can also be used to parallelized the uncompression process.
+This trick can be used to accelerate uncompression. For example, suppose there are 1001 selections in the file `rd_select.out`. We can have 1001 computers work on each selection. So this trick can also be used to parallelized the uncompression process. If, however, one would like to find unique PCPs, rather than just PCPs, this trick has to be modified.
 
 ### Verifaction
 
