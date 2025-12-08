@@ -47,7 +47,8 @@ int main(int argc, char ** argv) {
 	char select_fname[100];
     sprintf(select_fname, "results/%d/rd_select.out", ORDER);
     ifstream infile(select_fname);
-    if(SELECT_FLAG && !infile) {
+    if(SELECT_FLAG && !infile)
+	{
         printf("Error: RD_SELECT FILE UNAVAILABLE\n");
         return -1;
     }
@@ -133,8 +134,6 @@ int main(int argc, char ** argv) {
         partitions.insert(make_pair(letter, partition));
     }
 
-	char fname[50];
-    sprintf(fname, "results/%d-pairs-found", ORDER);
     std::ifstream file(input_filename);
     std::string letter;
 
@@ -351,9 +350,8 @@ int main(int argc, char ** argv) {
                     break;
                 }
             }
-            //printf("curr: %d, stack: %d\n", curr, stack[curr]);
         }
-    }
+    }// while(curr != -1) loop
 
     printf("%llu A sequences checked\n", count);
     count = 0;
@@ -431,7 +429,7 @@ int main(int argc, char ** argv) {
                 }
             }
         }
-    }
+    }// while(curr != -1) loop
         lines_processed++;
     }//Su: the while(file.good()) loop
 
